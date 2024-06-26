@@ -75,5 +75,10 @@ def test7():
 
 def test8():
     CrowdController = cf.CrowdController()
-    CrowdController.invertMouse(5)
+    time.sleep(5)
+    # CrowdController.disable_LeftClick(5)
+    # CrowdController.random_direction(5)
+    #disable Mouse
+    CrowdController.disable_MouseMove(5)
+    
 test8()
