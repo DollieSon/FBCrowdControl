@@ -75,12 +75,5 @@ def test7():
 
 def test8():
     CrowdController = cf.CrowdController()
-    print("Disabling left click")
-    CrowdController.disable_LeftClick(5)
-    for i in range(10):
-        print(i)
-        time.sleep(1)
-        if i == 3:
-            CrowdController.disable_MouseMove(5)
-
+    CrowdController.invertMouse(5)
 test8()
