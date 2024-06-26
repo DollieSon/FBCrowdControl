@@ -1,9 +1,16 @@
 import pynput
 import time
 import threading
+import ctypes
+import pyautogui
+import random
+u32 = ctypes.windll.user32
+ScreenSize = u32.GetSystemMetrics(0), u32.GetSystemMetrics(1)
+print(ScreenSize)
+
 class CrowdController():
     disabled = set()
-    isInverted = False
+    # isInverted = False
     keyboard_C = pynput.keyboard.Controller
     mouse_C = pynput.mouse.Controller
     mouse_L = pynput.mouse.Listener
@@ -14,14 +21,16 @@ class CrowdController():
     def MC_event_filter(self,msg,data):
         if msg in self.disabled:
             pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
+        # if self.isInverted and msg == 0x200:
+        #     data.pt.x = ScreenSize[0] - data.pt.x
+        #     data.pt.y = ScreenSize[1] - data.pt.y
+        #     self.mouse_C.position = (data.pt.x, data.pt.y)
+        #     pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
 
-    def invertedMove(self,x,y):
-        if self.isInverted:
-            self.mouse_C.position = (x,y)
 
     def __init__(self) -> None:
         self.keyboard_L = pynput.keyboard.Listener(win32_event_filter=self.KC_event_filter)
-        self.mouse_L = pynput.mouse.Listener(win32_event_filter=self.MC_event_filter, on_move=self.invertedMove)
+        self.mouse_L = pynput.mouse.Listener(win32_event_filter=self.MC_event_filter)
         self.mouse_C = pynput.mouse.Controller()
         self.keyboard_L.start()
         self.mouse_L.start()
@@ -45,11 +54,52 @@ class CrowdController():
         self.disable_key(0x200,secs)
 
     
-    def __enableInvert(self,secs:int,mt):
-        time.sleep(secs)
-        self.isInverted = False
+    # def __enableInvert(self,secs:int,mt):
+    #     time.sleep(secs)
+    #     self.isInverted = False
 
-    def invertMouse(self,dur):
-        self.isInverted = True
-        t1 = threading.Thread(target=self.__enableInvert, args=(dur,3))
+    # def invertMouse(self,dur):
+    #     self.isInverted = True
+    #     t1 = threading.Thread(target=self.__enableInvert, args=(dur,3))
+    #     t1.start()
+    def __moveRandom(self,directions):
+        for dir in directions:
+            sleep = random.randint(1,2)
+            distance = random.randint(100,500)
+            xmult = 0
+            ymult = 0
+            if dir == 1:
+                xmult = 0
+                ymult = 1
+            elif dir == 2:
+                xmult = 0
+                ymult = -1
+            elif dir == 3:
+                xmult = 1
+                ymult = 0
+            elif dir == 4:
+                xmult = -1
+                ymult = 0
+            elif dir == 5:
+                xmult = 1
+                ymult = 1
+            elif dir == 6:
+                xmult = -1
+                ymult = 1
+            elif dir == 7:
+                xmult = -1
+                ymult = -1
+            elif dir == 8:
+                xmult = 1
+                ymult = -1
+            x = self.mouse_C.position[0] + distance*xmult
+            y = self.mouse_C.position[1] + distance*ymult
+            print("Moving to: ",x,y)
+            self.mouse_C.position = (x,y)
+            time.sleep(sleep)
+
+    def random_direction(self,num_dir):
+        directions = [random.randint(1,8) for _ in range(num_dir)]
+        print(directions)
+        t1 = threading.Thread(target=self.__moveRandom, args=([directions]))
         t1.start()
