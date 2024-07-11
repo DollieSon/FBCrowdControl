@@ -4,6 +4,7 @@ import threading
 import ctypes
 import pyautogui
 import random
+import win32api, win32con
 u32 = ctypes.windll.user32
 ScreenSize = u32.GetSystemMetrics(0), u32.GetSystemMetrics(1)
 print(ScreenSize)
@@ -95,6 +96,7 @@ class CrowdController():
             x = self.mouse_C.position[0] + distance*xmult
             y = self.mouse_C.position[1] + distance*ymult
             print("Moving to: ",x,y)
+            win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, x, y, 0, 0)
             self.mouse_C.position = (x,y)
             time.sleep(sleep)
 
