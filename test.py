@@ -73,6 +73,7 @@ def test7():
     disabled = 0x59
     kl.stop()
 
+#random move test
 def test8():
     CrowdController = cf.CrowdController()
     time.sleep(5)
@@ -81,4 +82,9 @@ def test8():
     #disable Mouse
     #CrowdController.disable_MouseMove(5)
     
-test8()
+def test9():
+    CrowdController = cf.CrowdController()
+    time.sleep(5)
+    CrowdController.invertMouse(5)
+
+test9()

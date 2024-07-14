@@ -11,7 +11,7 @@ print(ScreenSize)
 
 class CrowdController():
     disabled = set()
-    # isInverted = False
+    isInverted = False
     keyboard_C = pynput.keyboard.Controller
     mouse_C = pynput.mouse.Controller
     mouse_L = pynput.mouse.Listener
@@ -22,11 +22,11 @@ class CrowdController():
     def MC_event_filter(self,msg,data):
         if msg in self.disabled:
             pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
-        # if self.isInverted and msg == 0x200:
-        #     data.pt.x = ScreenSize[0] - data.pt.x
-        #     data.pt.y = ScreenSize[1] - data.pt.y
-        #     self.mouse_C.position = (data.pt.x, data.pt.y)
-        #     pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
+        if self.isInverted and msg == 0x200:
+            data.pt.x = ScreenSize[0] - data.pt.x
+            data.pt.y = ScreenSize[1] - data.pt.y
+            pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
+            # Invert it
 
 
     def __init__(self) -> None:
@@ -55,14 +55,18 @@ class CrowdController():
         self.disable_key(0x200,secs)
 
     
-    # def __enableInvert(self,secs:int,mt):
-    #     time.sleep(secs)
-    #     self.isInverted = False
+    def __enableInvert(self,secs:int,mt):
+        time.sleep(secs)
+        self.isInverted = False
 
-    # def invertMouse(self,dur):
-    #     self.isInverted = True
-    #     t1 = threading.Thread(target=self.__enableInvert, args=(dur,3))
-    #     t1.start()
+    #not yet fully implemented
+    
+    def invertMouse(self,dur):
+        self.isInverted = True
+        t1 = threading.Thread(target=self.__enableInvert, args=(dur,3))
+        t1.start()
+
+    
     def __moveRandom(self,directions):
         for dir in directions:
             sleep = random.randint(1,2)
