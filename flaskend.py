@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 app = Flask(__name__)
-CORS(app,resources={r"/data": {"origins": "https://www.youtube.com"}})
+CORS(app,resources={r"/data": {"origins": "https://www.facebook.com"}})
 @app.route('/data', methods=['POST'])
 def receive_data():
     data = request.get_json()
