@@ -1,4 +1,4 @@
-#How to run
+# How to run
 1. Inject Js Script to the webpage of the comment page (pop-out mode):
   - must have atleast have 1 message
 2. run python file (websocket.py)
@@ -6,7 +6,7 @@
 3. enjoy???
 
 
-#Explaination
+# Explaination
 ## Getting the comments fromt the livestream
   - The best way I went through this was just injecting a Js Script that detects changes in an html element and sending the data to the python script through websockets
 ### why not use Meta's Live Video API?
