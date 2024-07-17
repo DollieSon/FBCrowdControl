@@ -87,4 +87,10 @@ def test9():
     time.sleep(5)
     CrowdController.invertMouse(5)
 
-test9()
+def test10():
+    CrowdController = cf.CrowdController()
+    time.sleep(5)
+    print("disabling w")
+    CrowdController.hold_forward(5)
+    
+test10()
