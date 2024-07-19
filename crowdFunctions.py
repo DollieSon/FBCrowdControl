@@ -5,31 +5,53 @@ import ctypes
 import pyautogui
 import random
 import win32api, win32con
+import mysql.connector
+import datetime
 u32 = ctypes.windll.user32
 ScreenSize = u32.GetSystemMetrics(0), u32.GetSystemMetrics(1)
 print(ScreenSize)
 
+class commadDet:
+    baseCost:int
+    extraCost:int
+    effect:callable
+    baseTime:int
+    
+    def __init__(self,baseC:int,eCost:int,eff:callable,bT:int) -> None:
+        self.baseCost = baseC
+        self.extraCost = eCost
+        self.effect = eff
+        self.baseTime = bT
+
+
+
 class CrowdController():
     disabled = set()
-    disabledUp = set()
-    isInverted = False
     keyboard_C = pynput.keyboard.Controller
     mouse_C = pynput.mouse.Controller
     mouse_L = pynput.mouse.Listener
+
+    BASEPLAYERPOINTS = 10
+    MINUTESPERPOINT = 3
+
+    database = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="fbplays"
+    )
+    """
+    """
+
     def KC_event_filter(self,msg,data):
         if data.vkCode in self.disabled:
           pynput.keyboard.Listener.suppress_event(pynput.keyboard.Listener)
-        if data.vkCode in self.disabledUp and msg == 0x0101: # ox101 is the up event
+        if data.vkCode in self.disabled and msg == 0x0101: # ox101 is the up event
             pynput.keyboard.Listener.suppress_event(pynput.keyboard.Listener)
     
     def MC_event_filter(self,msg,data):
         if msg in self.disabled:
             pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
-        if self.isInverted and msg == 0x200:
-            data.pt.x = ScreenSize[0] - data.pt.x
-            data.pt.y = ScreenSize[1] - data.pt.y
-            pynput.mouse.Listener.suppress_event(pynput.mouse.Listener)
-            # Invert it
 
 
     def __init__(self) -> None:
@@ -45,6 +67,8 @@ class CrowdController():
         self.disabled.remove(key)   
 
     def _disable_key(self,key,secs):
+        if key in self.disabled:
+            return -1
         self.disabled.add(key)
         t1 = threading.Thread(target=self.__enable_key, args=(key,secs))
         t1.start()
@@ -86,22 +110,22 @@ class CrowdController():
             self.mouse_C.position = (x,y)
             time.sleep(sleep)
 
-    def __enableInvert(self,secs:int,mt):
-        time.sleep(secs)
-        self.isInverted = False
-
     def __holdKbd(self,key,secs):
-        self.disabledUp.add(key)
+        if key in self.disabled:
+            return -1
+        self.disabled.add(key)
         secs *=10
         while secs > 0:
             win32api.keybd_event(key, 0, 0, 0)
             time.sleep(0.1)
             secs -= 1
-        self.disabledUp.remove(key)
+        self.disabled.remove(key)
         win32api.keybd_event(key, 0, win32con.KEYEVENTF_KEYUP, 0)
 
     def __spamKey(self,key,secs,delay=0.1,wait=0):
-        self.disabledUp.add(key)
+        if key in self.disabled:
+            return -1
+        self.disabled.add(key)
         secs *=int(1/(delay+wait))
         while secs > 0:
             win32api.keybd_event(key, 0, 0, 0)
@@ -109,7 +133,7 @@ class CrowdController():
             win32api.keybd_event(key, 0, win32con.KEYEVENTF_KEYUP, 0)
             time.sleep(wait)
             secs -= 1
-        self.disabledUp.remove(key)
+        self.disabled.remove(key)
         win32api.keybd_event(key, 0, win32con.KEYEVENTF_KEYUP, 0)
 
 
@@ -162,14 +186,77 @@ class CrowdController():
         t1 = threading.Thread(target=self.__spamKey, args=(0x09,secs,0.2,0.5))
         t1.start()
 
-    #not yet fully implemented
-    def invertMouse(self,dur):
-        self.isInverted = True
-        t1 = threading.Thread(target=self.__enableInvert, args=(dur,3))
-        t1.start()
-
     def random_direction(self,num_dir):
         directions = [random.randint(1,8) for _ in range(num_dir)]
         print(directions)
         t1 = threading.Thread(target=self.__moveRandom, args=([directions]))
         t1.start()
+
+
+    commands = {
+        "RandomLook":commadDet(2,1,random_direction,5),
+        "YardStare":commadDet(5,2,disable_MouseMove,3),
+        "Shont":commadDet(3,1,disable_LeftClick,3),
+        "Minent":commadDet(3,1,disable_RightClick,3),
+        "Berserk":commadDet(4,1,hold_left_click,4),
+        "Miner69er":commadDet(4,1,hold_right_click,4),
+        "Courage":commadDet(2,1,hold_forward,8,),
+        "Cowardice":commadDet(2,1,hold_backward,8),
+        "TodaLeft":commadDet(2,1,hold_left,5),
+        "TodaRight":commadDet(2,1,hold_right,5),
+        "aRRent":commadDet(3,1,disable_reload,10),
+        "BunnyHop":commadDet(3,1,bunny_hop,8),
+        "Grounded":commadDet(3,1,disable_spacebar,8),
+        "MapBoy":commadDet(4,1,tab_spam,5)
+    }
+
+    """
+    return values
+    0 = Success
+    1 = Command Length Error
+    2 = Command Not Found
+    3 = Command Conflict
+    4 = Points not Enough   
+    """
+    def read(self,player:str,command:str) -> int: #command = "command secs"
+        # update player table
+        #check if player in db
+        cursor = self.database.cursor()
+        print(type(player))
+        cursor.execute("SELECT * FROM maintable WHERE name = '"+player+"'")
+        result = cursor.fetchall()
+        if(result.__len__() == 0):
+            cursor.execute("INSERT INTO maintable (name,points,last_update) VALUES (%s,%s,%s)",(player,self.BASEPLAYERPOINTS,datetime.datetime.now()))
+            self.database.commit()
+        command = command.split(" ")
+        if(command.__len__() != 2):
+            print("Command Length Error")
+            return 1
+        if(command[0] not in self.commands.keys()):
+            print("Command Not Found")
+            return 2
+        command[1] = int(command[1])
+        # print("Secs: ",command[1])
+        if(command[1] <= self.commands[command[0]].baseTime):
+            command[1] = self.commands[command[0]].baseTime
+        cost = (command[1] - self.commands[command[0]].baseTime) * self.commands[command[0]].extraCost + self.commands[command[0]].baseCost
+        print("Time:",command[1])
+        print("Cost: ",cost)
+        # reduce player points
+        cursor.execute("SELECT points FROM maintable WHERE name = '"+player+"'")
+        result = cursor.fetchall()
+        playerPoints = result[0][0]
+        if( playerPoints< cost):
+            print("Points not Enough")
+            return 4
+        playerPoints -= cost
+        isgood = self.commands[command[0]].effect(self,command[1])
+        if(isgood == -1):
+            print("Command Conflict")
+            return 3
+        cursor.execute("UPDATE maintable SET points = %s WHERE name = %s",(playerPoints,player))
+        # update last_update
+        cursor.execute("UPDATE maintable SET last_update = %s WHERE name = %s",(datetime.datetime.now(),player))
+        #execute command
+        self.database.commit()
+        return 0

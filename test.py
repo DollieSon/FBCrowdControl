@@ -91,6 +91,9 @@ def test10():
     CrowdController = cf.CrowdController()
     time.sleep(5)
     print("disabling w")
-    CrowdController.hold_forward(5)
-    
-test10()
+    CrowdController.hold_left(5)
+
+def test11():
+    CrowdController = cf.CrowdController()
+    CrowdController.read("Ray Anthony","Shont 5")
+test11()
